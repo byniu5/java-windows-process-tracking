@@ -1,4 +1,4 @@
-// TODO Consider moving Timer into TaskTracker
+// TODO Consider moving Timer into TaskTracker                                              Not necessary
 //      Because I think it's not a good idea to have it in the frame
 //      Code will be more complicated and not so clean but it I'm not sure
 //      if it's good practise to have it in the frame
@@ -58,6 +58,14 @@ public class TaskTrackerFrame extends JFrame {
     }
 
     private void updateLabel() {
+        ImageIcon icon = TaskTracker.getCurrentIcon();
+        if (icon != null) {
+            ImageIcon resizedIcon = resizeIcon(icon, 64, 64);
+            iconLabel.setIcon(resizedIcon);
+        } else {
+            iconLabel.setIcon(null);
+        }
+
         textField.setText(TaskTracker.activeWindowTitle);
         label2.setText("Time: " + timeCounter);
         }

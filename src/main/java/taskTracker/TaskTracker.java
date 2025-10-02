@@ -1,3 +1,5 @@
+// Code for displaying icon associated with an executable
+// https://www.rgagnon.com/javadetails/java-0439.html
 package taskTracker;
 // TODO
 //  Namespace for Interfaces package
@@ -7,18 +9,21 @@ import com.sun.jna.platform.win32.WinNT;
 import com.sun.jna.platform.win32.Psapi;
 import com.sun.jna.ptr.IntByReference;
 import taskTracker.Interfaces.Kernel32;
-import taskTracker.Interfaces.Shell32;
 import taskTracker.Interfaces.User32;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
 
 public class TaskTracker {
 
     public String activeWindowTitle;
-    private WinDef.HICON currentIcon;
+    private ImageIcon currentIcon;
     User32 user32 = User32.INSTANCE;
     Kernel32 kernel32 = Kernel32.INSTANCE;
-    Shell32 shell32 = Shell32.INSTANCE;
 
-    public WinDef.HICON getCurrentIcon() {
+    public ImageIcon getCurrentIcon() {
         return currentIcon;
     }
 
@@ -61,23 +66,39 @@ public class TaskTracker {
             kernel32.CloseHandle(processHandle);
         }
 
-        // Icons
+        // Icons and display names
 
-        if (!processPath.isEmpty()) {
-            WinDef.HICON[] largeIcons = new WinDef.HICON[1];
-            // Extracting only large icon from file path.
-            int result = shell32.ExtractIconExA(processPath, 0, largeIcons, null, 1);
-            if (result > 0 && largeIcons[0] != null) {
-                if (currentIcon != null) {
-                    user32.DestroyIcon(currentIcon);
+        ImageIcon icon = null;
+        String displayName = "";
+        try {
+            if (!processPath.isEmpty()) {
+                File file = new File(processPath);
+                if (file.exists()) {
+                    // Use FileSystemView (public API) instead
+                    javax.swing.filechooser.FileSystemView fsv = javax.swing.filechooser.FileSystemView.getFileSystemView();
+                    
+                    // Get system, display name
+                    displayName = fsv.getSystemDisplayName(file);
+                    
+                    Icon fileIcon = fsv.getSystemIcon(file);
+                    if (fileIcon instanceof ImageIcon) {
+                        icon = (ImageIcon) fileIcon;
+                    } else {
+                        // Convert Icon to ImageIcon if needed
+                        icon = new ImageIcon(IconUtils.iconToImage(fileIcon));
+                    }
                 }
-                currentIcon = largeIcons[0];
             }
+        } catch (Exception e) {
+            System.err.println("Failed to extract icon: " + e.getMessage());
+            // Optionally set a default icon here
+            icon = new ImageIcon(new BufferedImage(64, 64, BufferedImage.TYPE_INT_ARGB));
         }
 
         // Output
 
-        activeWindowTitle = windowTitleStr + " - " + classNameStr + " - " + processIdStr + " - " + parentTitleStr + " - " + processPath;
+        activeWindowTitle = windowTitleStr + " - " + classNameStr + " - " + processIdStr + " - " + parentTitleStr + " - " + processPath + " - " + displayName;
+        currentIcon = icon;
 
     }
 }
