@@ -1,4 +1,4 @@
-package taskTracker;
+package taskTracker.Interfaces;
 
 import com.sun.jna.*;
 import com.sun.jna.platform.win32.WinDef;
@@ -19,6 +19,8 @@ public interface User32 extends StdCallLibrary {
     void GetClassNameA(WinDef.HWND hWnd, byte[] lpString, int nMaxCount);
     void GetWindowThreadProcessId(WinDef.HWND hWnd, IntByReference lpdwProcessId);
     WinDef.HWND GetParent(WinDef.HWND hWnd);
+
+    boolean DestroyIcon(WinDef.HICON hIcon);
 }
 
 

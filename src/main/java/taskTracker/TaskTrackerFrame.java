@@ -12,6 +12,8 @@ package taskTracker;
 import javax.swing.*;
 import java.awt.*;
 
+import static taskTracker.IconUtils.resizeIcon;
+
 public class TaskTrackerFrame extends JFrame {
 
     private final TaskTracker TaskTracker = new TaskTracker();
@@ -20,6 +22,7 @@ public class TaskTrackerFrame extends JFrame {
 
     private final JLabel label = new JLabel();
     private final JLabel label2 = new JLabel();
+    private final JLabel iconLabel = new JLabel();
     private final JTextField textField = new JTextField();
 
 
@@ -34,9 +37,6 @@ public class TaskTrackerFrame extends JFrame {
             timeCounter++;
         });
         timer.start();
-//            TaskTracker.refresher();
-//            updateLabel();
-
     }
 
     private void initializeUI() {
@@ -51,6 +51,7 @@ public class TaskTrackerFrame extends JFrame {
         add(panel);
 
         textField.setText(TaskTracker.activeWindowTitle);
+        panel.add(iconLabel, BorderLayout.WEST);
         panel.add(textField, BorderLayout.CENTER);
         panel.add(label2, BorderLayout.SOUTH);
 
@@ -59,6 +60,5 @@ public class TaskTrackerFrame extends JFrame {
     private void updateLabel() {
         textField.setText(TaskTracker.activeWindowTitle);
         label2.setText("Time: " + timeCounter);
+        }
     }
-
-}
