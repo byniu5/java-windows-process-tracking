@@ -20,6 +20,7 @@ public class TaskTrackerFrame extends JFrame {
 
     private final JLabel label = new JLabel();
     private final JLabel label2 = new JLabel();
+    private final JTextField textField = new JTextField();
 
 
     public TaskTrackerFrame() {
@@ -27,7 +28,7 @@ public class TaskTrackerFrame extends JFrame {
 
         initializeUI();
 
-        Timer timer = new Timer(1000, e -> {
+        Timer timer = new Timer(3000, e -> {
             TaskTracker.trackActiveWindow();
             updateLabel();
             timeCounter++;
@@ -49,14 +50,14 @@ public class TaskTrackerFrame extends JFrame {
         panel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
         add(panel);
 
-        label.setText(TaskTracker.activeWindowTitle);
-        panel.add(label, BorderLayout.CENTER);
+        textField.setText(TaskTracker.activeWindowTitle);
+        panel.add(textField, BorderLayout.CENTER);
         panel.add(label2, BorderLayout.SOUTH);
 
     }
 
     private void updateLabel() {
-        label.setText(TaskTracker.activeWindowTitle);
+        textField.setText(TaskTracker.activeWindowTitle);
         label2.setText("Time: " + timeCounter);
     }
 
