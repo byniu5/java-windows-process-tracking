@@ -20,11 +20,16 @@ public class TaskTracker {
 
     public String activeWindowTitle;
     private ImageIcon currentIcon;
+    private int processIdStr;
     User32 user32 = User32.INSTANCE;
     Kernel32 kernel32 = Kernel32.INSTANCE;
 
     public ImageIcon getCurrentIcon() {
         return currentIcon;
+    }
+    
+    public int getProcessIdStr() {
+        return processIdStr;
     }
 
     public void trackActiveWindow() {
@@ -46,7 +51,7 @@ public class TaskTracker {
 
         String windowTitleStr = Native.toString(windowText);
         String classNameStr = Native.toString(className);
-        String processIdStr = lpdwProcessId.getValue() + "";
+        processIdStr = lpdwProcessId.getValue();
 
         String parentTitleStr = "";
         if (parent != null) {
@@ -58,7 +63,7 @@ public class TaskTracker {
         String processPath = "";
         if (processHandle != null) {
             byte[] exePathBuffer = new byte[1024];
-            // Converting process ID to a executable file path, then saving it to a string.
+            // Converting process ID to an executable file path, then saving it to a string.
             int result = Psapi.INSTANCE.GetModuleFileNameExA(processHandle, null, exePathBuffer, exePathBuffer.length);
             if (result > 0) {
                 processPath = Native.toString(exePathBuffer);

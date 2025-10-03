@@ -19,11 +19,15 @@ public class TaskTrackerFrame extends JFrame {
     private final TaskTracker TaskTracker = new TaskTracker();
 
     public int timeCounter = 0;
+    public int processIdActual;
+    public int processIdPrevious;
 
     private final JLabel label = new JLabel();
     private final JLabel label2 = new JLabel();
     private final JLabel iconLabel = new JLabel();
     private final JTextField textField = new JTextField();
+
+    private final JPanel topPanel = new JPanel();
 
 
     public TaskTrackerFrame() {
@@ -34,9 +38,26 @@ public class TaskTrackerFrame extends JFrame {
         Timer timer = new Timer(3000, e -> {
             TaskTracker.trackActiveWindow();
             updateLabel();
-            timeCounter++;
+            timeCounter+=3;
+
+            if (processIdActual != TaskTracker.getProcessIdStr()) {
+                processIdPrevious = processIdActual;
+                processIdActual = TaskTracker.getProcessIdStr();
+                System.out.println("Process ID changed from " + processIdPrevious + " to " + processIdActual);
+
+
+            }
+
         });
         timer.start();
+
+        // Initialization of the actual process ID. Run only once.
+        TaskTracker.trackActiveWindow();
+        if (processIdActual != TaskTracker.getProcessIdStr()) {
+            processIdActual = TaskTracker.getProcessIdStr();
+            processIdPrevious = processIdActual;
+            System.out.println("Process ID changed");
+        }
     }
 
     private void initializeUI() {
@@ -50,9 +71,12 @@ public class TaskTrackerFrame extends JFrame {
         panel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
         add(panel);
 
+        topPanel.setLayout(new BorderLayout(8, 8));
+        panel.add(topPanel, BorderLayout.NORTH);
+
         textField.setText(TaskTracker.activeWindowTitle);
-        panel.add(iconLabel, BorderLayout.WEST);
-        panel.add(textField, BorderLayout.CENTER);
+        topPanel.add(iconLabel, BorderLayout.WEST);
+        topPanel.add(textField, BorderLayout.CENTER);
         panel.add(label2, BorderLayout.SOUTH);
 
     }
@@ -68,5 +92,6 @@ public class TaskTrackerFrame extends JFrame {
 
         textField.setText(TaskTracker.activeWindowTitle);
         label2.setText("Time: " + timeCounter);
+
         }
     }
