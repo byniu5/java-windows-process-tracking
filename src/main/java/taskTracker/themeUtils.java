@@ -1,5 +1,13 @@
 package taskTracker;
 
+import com.sun.jna.Native;
+import com.sun.jna.Pointer;
+import com.sun.jna.platform.win32.User32;
+import com.sun.jna.platform.win32.WinDef.HWND;
+import com.sun.jna.platform.win32.WinNT.HRESULT;
+import com.sun.jna.win32.StdCallLibrary;
+
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
@@ -20,6 +28,16 @@ public class themeUtils {
     public static final Color GRID = new Color(70, 70, 70);
     public static final Color SELECTION_BG = new Color(75, 110, 175);
     public static final Color SELECTION_FG = Color.WHITE;
+
+    // Windows DWM API interface
+    private interface Dwmapi extends StdCallLibrary {
+        Dwmapi INSTANCE = Native.load("dwmapi", Dwmapi.class);
+        HRESULT DwmSetWindowAttribute(HWND hwnd, int dwAttribute, Pointer pvAttribute, int cbAttribute);
+    }
+
+    private static final int DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1 = 19;
+    private static final int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
+
 
     /**
      * Applies dark theme to the entire application using UIManager.
@@ -75,6 +93,60 @@ public class themeUtils {
             e.printStackTrace();
         }
     }
+
+    /**
+     * Applies dark title bar to a JFrame.
+     * Works on Windows 10/11 and macOS.
+     * Must be called AFTER setVisible(true) for the frame.
+     *
+     * @param frame The JFrame to apply dark title bar to
+     */
+    public static void applyDarkTitleBar(JFrame frame) {
+        String os = System.getProperty("os.name").toLowerCase();
+
+        if (os.contains("windows")) {
+            applyWindowsDarkTitleBar(frame);
+        }
+        // macOS automatically uses dark title bar when system is in dark mode
+    }
+
+    /**
+     * Uses JNA to enable dark title bar on Windows 10/11.
+     */
+    private static void applyWindowsDarkTitleBar(JFrame frame) {
+        try {
+            HWND hwnd = new HWND(Native.getWindowPointer(frame));
+
+            int value = 1; // TRUE - enable dark mode
+            Pointer ptr = new com.sun.jna.Memory(4);
+            ptr.setInt(0, value);
+
+            // Try Windows 11/Windows 10 20H1+ attribute first
+            HRESULT result = Dwmapi.INSTANCE.DwmSetWindowAttribute(
+                    hwnd,
+                    DWMWA_USE_IMMERSIVE_DARK_MODE,
+                    ptr,
+                    4
+            );
+
+            // If failed, try older Windows 10 attribute
+            if (result.intValue() != 0) {
+                Dwmapi.INSTANCE.DwmSetWindowAttribute(
+                        hwnd,
+                        DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1,
+                        ptr,
+                        4
+                );
+            }
+
+            // Force repaint
+            frame.repaint();
+
+        } catch (Exception e) {
+            System.err.println("Could not apply dark title bar: " + e.getMessage());
+        }
+    }
+
 
     /**
      * Applies dark theme styling to a JPanel.

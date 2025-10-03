@@ -1,18 +1,22 @@
-// TODO Consider moving Timer into TaskTracker                                              Not necessary
-//      Because I think it's not a good idea to have it in the frame
+// TODO Consider moving Timer into TaskTracker                                              Not needed
 //      Code will be more complicated and not so clean but it I'm not sure
 //      if it's good practise to have it in the frame
-// TODO Previously tracked apps should be saved with the counted time
-// TODO If we return to the app that we counted before, we should continue counting
-// TODO counters storage
-// TODO Table with tracked apps
-// TODO Current time from system support
-// TODO Calculation based on current time
-// TODO Set the default icon for apps that don't have icon
+// TODO Previously tracked apps should be saved with the counted time                           OK
+// TODO If we return to the app that we counted before, we should continue counting             OK
+// TODO counters storage                                                                        OK
+// TODO Table with tracked apps                                                                 OK
+// TODO Current time from system support                                                    Not needed
+// TODO Calculation based on current time                                                   Not needed
+// TODO Set the default icon for apps that doesn't have icon
 // TODO For now I collect only counted time in array
 //      I should store all values of the table row, to save them into database or file
 //      and reuse later
-// TODO Dark theme
+// TODO Dark theme                                                                              OK
+// TODO Apps should be sorted by counted time. From biggest to smallest.
+// TODO Apps in table and textField should be unavailable for editing.
+// TODO At first iteration, the first tracked app should be added to the table automatically   OK
+// TODO Understand TimeUtils class
+// TODO Consider better structure of the files
 
 package taskTracker.Windows;
 
@@ -82,9 +86,7 @@ public class TaskTrackerFrame extends JFrame {
                 processIdPrevious = processIdActual;
                 processIdActual = TaskTracker.getProcessId();
                 System.out.println("Process ID changed from " + processIdPrevious + " to " + processIdActual);
-               // TODO (processIdPrevious == TaskTracker.getProcessIdStr()) { don't put into table active process, only those finished
                 createTable();
-                // TODO }
             }
             timeCounter++; timeOfWork++;
             updateTable();
@@ -96,6 +98,7 @@ public class TaskTrackerFrame extends JFrame {
         if (processIdActual != TaskTracker.getProcessId()) {
             processIdActual = TaskTracker.getProcessId();
             processIdPrevious = processIdActual;
+            createTable();
             System.out.println("Process ID changed");
         }
 
@@ -139,7 +142,7 @@ public class TaskTrackerFrame extends JFrame {
         table.getColumnModel().getColumn(2).setMaxWidth(ICON_WIDTH);
         table.setShowGrid(false);
 
-        /**
+        /*
          * Custom table cell renderer for displaying icons in the first column.
          * Renders ImageIcon objects as JLabel components with the icon set.
          */
@@ -155,6 +158,17 @@ public class TaskTrackerFrame extends JFrame {
         });
         JScrollPane scrollPane = new JScrollPane(table);
         panel.add(scrollPane, BorderLayout.CENTER);
+
+        // Theme
+
+        themeUtils.stylePanel(panel);
+        themeUtils.stylePanel(topPanel);
+        themeUtils.styleLabel(timeLabel);
+        themeUtils.styleTextField(textField);
+        themeUtils.styleScrollPane(scrollPane);
+        themeUtils.styleTable(table);
+        setVisible(true);
+        themeUtils.applyDarkTitleBar(this);
 
     }
 
@@ -236,19 +250,6 @@ public class TaskTrackerFrame extends JFrame {
         timeStr += time + "s";
         return timeStr;
     }
-
-
-    private void setDarkTheme() {
-        // Dark theme colors
-        Color bgDark = new Color(45, 45, 45);
-        Color bgLighter = new Color(60, 60, 60);
-        Color fgLight = new Color(230, 230, 230);
-        getContentPane().setBackground(bgDark);
-        //panel.setBackground(bgDark);
-
-    }
-
-
 
 }
 
