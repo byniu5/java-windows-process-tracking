@@ -4,8 +4,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 
+/**
+ * Utility class for operations related to icons and images.
+ */
 public class IconUtils {
 
+    /**
+     * This method is used to convert an ImageIcon to an Image.
+     */
     public static Image iconToImage(Icon icon) {
         if (icon instanceof ImageIcon) {
             return ((ImageIcon) icon).getImage();

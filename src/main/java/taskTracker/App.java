@@ -2,6 +2,9 @@ package taskTracker;
 
 import taskTracker.Windows.TaskTrackerFrame;
 
+/**
+ * Entry point for the application.
+ */
 public class App {
 
     public static void main(String[] args) {
@@ -13,9 +16,11 @@ public class App {
             frame.setVisible(true);
         });
     }
-    else {
-        TaskTracker taskTracker = new TaskTracker();
-        taskTracker.trackActiveWindow();
-    }
+    // Possibility to run as a console application.
+//     else {
+//         TaskTracker taskTracker = new TaskTracker();
+//         taskTracker.trackActiveWindow();
+//     }
+
     }
 }
