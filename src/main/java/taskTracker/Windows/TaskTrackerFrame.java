@@ -9,12 +9,20 @@
 // TODO Current time from system support
 // TODO Calculation based on current time
 // TODO Set the default icon for apps that don't have icon
+// TODO For now I collect only counted time in array
+//      I should store all values of the table row, to save them into database or file
+//      and reuse later
+// TODO Dark theme
 
 package taskTracker.Windows;
 
 import taskTracker.TaskTracker;
+import taskTracker.themeUtils;
+
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
+
 import static taskTracker.IconUtils.resizeIcon;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
@@ -37,9 +45,11 @@ public class TaskTrackerFrame extends JFrame {
 
     // Variables
 
+    public int timeOfWork = 0;
     public int timeCounter = 0;
     public int processIdActual;
     public int processIdPrevious;
+    private ArrayList<Integer> timeValuesArray = new ArrayList<>();
 
     // Components
 
@@ -59,21 +69,25 @@ public class TaskTrackerFrame extends JFrame {
     public TaskTrackerFrame() {
         super("Task Tracker");
 
+        timeValuesArray = new ArrayList<>();
+
+        themeUtils.applyGlobalTheme();
         initializeUI();
 
-        Timer timer = new Timer(3000, e -> {
+        Timer timer = new Timer(1000, e -> {
             TaskTracker.trackActiveWindow();
             updateLabel();
-            timeCounter+=3;
 
             if (processIdActual != TaskTracker.getProcessId()) {
                 processIdPrevious = processIdActual;
                 processIdActual = TaskTracker.getProcessId();
                 System.out.println("Process ID changed from " + processIdPrevious + " to " + processIdActual);
                // TODO (processIdPrevious == TaskTracker.getProcessIdStr()) { don't put into table active process, only those finished
-                updateTable();
+                createTable();
                 // TODO }
             }
+            timeCounter++; timeOfWork++;
+            updateTable();
         });
         timer.start();
 
@@ -86,7 +100,7 @@ public class TaskTrackerFrame extends JFrame {
         }
 
     }
-//adseffdgs
+
     /**
      * Initializes the user interface (UI) components for the TaskTrackerFrame class.
      * This method creates a layout and adds components to the frame.
@@ -128,7 +142,7 @@ public class TaskTrackerFrame extends JFrame {
         /**
          * Custom table cell renderer for displaying icons in the first column.
          * Renders ImageIcon objects as JLabel components with the icon set.
-         */        
+         */
         table.getColumnModel().getColumn(0).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -151,37 +165,91 @@ public class TaskTrackerFrame extends JFrame {
      */
     private void updateLabel() {
         ImageIcon icon = TaskTracker.getCurrentIcon();
+        ImageIcon resizedIcon = null;
         if (icon != null) {
-            ImageIcon resizedIcon = resizeIcon(icon, ICON_WIDTH, ICON_HEIGHT);
+            resizedIcon = resizeIcon(icon, ICON_WIDTH, ICON_HEIGHT);
             iconLabel.setIcon(resizedIcon);
         } else {
             iconLabel.setIcon(null);
         }
 
         textField.setText(TaskTracker.activeWindowTitle);
-        timeLabel.setText("Time: " + timeCounter);
+        timeLabel.setText("Time: " + formatCountedTime(timeOfWork));
+    }
+
+    /**
+     * Creates a new row in the table with the current active window information.
+     */
+    private void createTable() {
+        for (int i = 0; i < tableModel.getRowCount(); i++) {
+            if (tableModel.getValueAt(i, 1).equals(TaskTracker.activeWindowTitle)) {
+                return;
+            }
+        }
+
+        ImageIcon icon = TaskTracker.getCurrentIcon();
+        ImageIcon resizedIcon = null;
+        if (icon != null) {
+            resizedIcon = resizeIcon(icon, ICON_WIDTH, ICON_HEIGHT);
+            iconLabel.setIcon(resizedIcon);
+        } else {
+            iconLabel.setIcon(null);
+        }
+
+        tableModel.insertRow(0, new Object[]{
+                resizedIcon,
+                TaskTracker.activeWindowTitle,
+                0
+        });
+        timeValuesArray.add(0, 0);
     }
 
     /**
      * Updates the table with the previous active window information.
-     * This method inserts a new row into the table with the current window information.
-     * It also updates the icon, title and time labels with the current active window information.
+     * It updates the icon, title and time labels with the current active window information.
      */
     private void updateTable() {
 
-            ImageIcon icon = TaskTracker.getCurrentIcon();
-            ImageIcon resizedIcon = null;
-            if (icon != null) {
-                resizedIcon = resizeIcon(icon, ICON_WIDTH, ICON_HEIGHT);
-                iconLabel.setIcon(resizedIcon);
-            } else {
-                iconLabel.setIcon(null);
+            for (int i = 0; i < tableModel.getRowCount(); i++) {
+                if (tableModel.getValueAt(i, 1).equals(TaskTracker.activeWindowTitle)) {
+                    // Calculate time actually counted with the time stored in the array.
+                    int timeCounted = timeCounter + timeValuesArray.get(i);
+                    // Set the new time value in the array and table.
+                    timeValuesArray.set(i, timeCounted);
+                    tableModel.setValueAt(formatCountedTime(timeCounted), i, 2);
+                    timeCounter = 0;
+                    return;
+                }
             }
-
-            tableModel.insertRow(0, new Object[]{
-                    resizedIcon,
-                    TaskTracker.activeWindowTitle,
-                    timeCounter
-            });
     }
+
+    private String formatCountedTime(int time) {
+        String timeStr = "";
+        if (time >= 3600) {
+            timeStr += time / 3600 + "h ";
+            time %= 3600;
+        }
+        if (time >= 60) {
+            timeStr += time / 60 + "m ";
+            time %= 60;
+        }
+        timeStr += time + "s";
+        return timeStr;
+    }
+
+
+    private void setDarkTheme() {
+        // Dark theme colors
+        Color bgDark = new Color(45, 45, 45);
+        Color bgLighter = new Color(60, 60, 60);
+        Color fgLight = new Color(230, 230, 230);
+        getContentPane().setBackground(bgDark);
+        //panel.setBackground(bgDark);
+
+    }
+
+
+
 }
+
+
