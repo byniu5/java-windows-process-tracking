@@ -7,12 +7,15 @@
 // TODO counters storage
 // TODO Table with tracked apps
 
-package taskTracker;
+package taskTracker.Windows;
 
+import taskTracker.TaskTracker;
 import javax.swing.*;
 import java.awt.*;
-
 import static taskTracker.IconUtils.resizeIcon;
+
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
 
 public class TaskTrackerFrame extends JFrame {
 
@@ -22,13 +25,13 @@ public class TaskTrackerFrame extends JFrame {
     public int processIdActual;
     public int processIdPrevious;
 
-    private final JLabel label = new JLabel();
     private final JLabel label2 = new JLabel();
     private final JLabel iconLabel = new JLabel();
     private final JTextField textField = new JTextField();
 
     private final JPanel topPanel = new JPanel();
-
+    private final DefaultTableModel tableModel = new DefaultTableModel();
+    private final JTable table = new JTable(tableModel);
 
     public TaskTrackerFrame() {
         super("Task Tracker");
@@ -37,7 +40,7 @@ public class TaskTrackerFrame extends JFrame {
 
         Timer timer = new Timer(3000, e -> {
             TaskTracker.trackActiveWindow();
-            updateLabel();
+            updateLabel(processIdActual);
             timeCounter+=3;
 
             if (processIdActual != TaskTracker.getProcessIdStr()) {
@@ -46,6 +49,9 @@ public class TaskTrackerFrame extends JFrame {
                 System.out.println("Process ID changed from " + processIdPrevious + " to " + processIdActual);
 
 
+               //if (processIdPrevious == TaskTracker.getProcessIdStr()) {
+                updateTable();
+                //}
             }
 
         });
@@ -79,9 +85,26 @@ public class TaskTrackerFrame extends JFrame {
         topPanel.add(textField, BorderLayout.CENTER);
         panel.add(label2, BorderLayout.SOUTH);
 
+        tableModel.addColumn("Icon");
+        tableModel.addColumn("Window Title");
+        tableModel.addColumn("Time (seconds)");
+        table.setRowHeight(64);
+        table.getColumnModel().getColumn(0).setCellRenderer(new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                JLabel label = new JLabel();
+                if (value instanceof ImageIcon) {
+                    label.setIcon((ImageIcon) value);
+                }
+                return label;
+            }
+        });
+        JScrollPane scrollPane = new JScrollPane(table);
+        panel.add(scrollPane, BorderLayout.CENTER);
+
     }
 
-    private void updateLabel() {
+    private void updateLabel(int processIdActual) {
         ImageIcon icon = TaskTracker.getCurrentIcon();
         if (icon != null) {
             ImageIcon resizedIcon = resizeIcon(icon, 64, 64);
@@ -94,4 +117,22 @@ public class TaskTrackerFrame extends JFrame {
         label2.setText("Time: " + timeCounter);
 
         }
+
+    private void updateTable() {
+
+            ImageIcon icon = TaskTracker.getCurrentIcon();
+            ImageIcon resizedIcon = null;
+            if (icon != null) {
+                resizedIcon = resizeIcon(icon, 64, 64);
+                iconLabel.setIcon(resizedIcon);
+            } else {
+                iconLabel.setIcon(null);
+            }
+
+            tableModel.insertRow(0, new Object[]{
+                    resizedIcon,
+                    TaskTracker.activeWindowTitle,
+                    timeCounter
+            });
     }
+}
