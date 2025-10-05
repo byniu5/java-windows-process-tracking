@@ -17,7 +17,7 @@
 // TODO At first iteration, the first tracked app should be added to the table automatically    OK
 // TODO Understand TimeUtils class
 // TODO Consider better structure of the files
-// TODO BIG web pages are counted differently that is the problem
+// TODO BIG web pages are counted differently that is the problem                               OK
 
 package taskTracker.Windows;
 
@@ -43,10 +43,10 @@ public class TaskTrackerFrame extends JFrame {
 
     // Constants
 
-    private static final int WINDOW_WIDTH = 550;
-    private static final int WINDOW_HEIGHT = 250;
     private static final int ICON_WIDTH = 28;
     private static final int ICON_HEIGHT = 28;
+    private static final int WINDOW_WIDTH = ICON_WIDTH*16;
+    private static final int WINDOW_HEIGHT = 250;
 
     // Variables
 
@@ -141,13 +141,15 @@ public class TaskTrackerFrame extends JFrame {
 
         tableModel.addColumn("Icon");
         tableModel.addColumn("Title");
+        tableModel.addColumn("Path");
         tableModel.addColumn("Time");
         table.setRowHeight(ICON_HEIGHT);
         table.getTableHeader().setResizingAllowed(false);
         table.getTableHeader().setReorderingAllowed(false);
         table.getColumnModel().getColumn(0).setMaxWidth(ICON_WIDTH);
-        table.getColumnModel().getColumn(1).setMaxWidth(WINDOW_WIDTH - ICON_WIDTH*2);
-        table.getColumnModel().getColumn(2).setMaxWidth(ICON_WIDTH);
+        table.getColumnModel().getColumn(1).setMaxWidth(ICON_WIDTH*3);
+        table.getColumnModel().getColumn(2).setMaxWidth(ICON_WIDTH*10);
+        table.getColumnModel().getColumn(3).setMaxWidth(ICON_WIDTH*2);
         table.setShowGrid(false);
 
         /*
@@ -195,7 +197,7 @@ public class TaskTrackerFrame extends JFrame {
             iconLabel.setIcon(null);
         }
 
-        textField.setText(TaskTracker.activeWindowTitle);
+        textField.setText(TaskTracker.activeWindowProcessPath);
         timeLabel.setText("Time: " + formatCountedTime(timeOfWork));
     }
 
@@ -204,7 +206,7 @@ public class TaskTrackerFrame extends JFrame {
      */
     private void createTable() {
         for (int i = 0; i < tableModel.getRowCount(); i++) {
-            if (tableModel.getValueAt(i, 1).equals(TaskTracker.activeWindowTitle)) {
+            if (tableModel.getValueAt(i, 2).equals(TaskTracker.activeWindowProcessPath)) {
                 return;
             }
         }
@@ -221,6 +223,7 @@ public class TaskTrackerFrame extends JFrame {
         tableModel.insertRow(0, new Object[]{
                 resizedIcon,
                 TaskTracker.activeWindowTitle,
+                TaskTracker.activeWindowProcessPath,
                 0
         });
         timeValuesArray.add(0, 0);
@@ -233,12 +236,12 @@ public class TaskTrackerFrame extends JFrame {
     private void updateTable() {
 
         for (int i = 0; i < tableModel.getRowCount(); i++) {
-            if (tableModel.getValueAt(i, 1).equals(TaskTracker.activeWindowTitle)) {
+            if (tableModel.getValueAt(i, 2).equals(TaskTracker.activeWindowProcessPath)) {
                 // Calculate time actually counted with the time stored in the array.
                 int timeCounted = timeCounter + timeValuesArray.get(i);
                 // Set the new time value in the array and table.
                 timeValuesArray.set(i, timeCounted);
-                tableModel.setValueAt(formatCountedTime(timeCounted), i, 2);
+                tableModel.setValueAt(formatCountedTime(timeCounted), i, 3);
                 timeCounter = 0;
                 sortTableByTime();
                 return;

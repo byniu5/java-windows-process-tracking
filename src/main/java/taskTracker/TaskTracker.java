@@ -27,6 +27,8 @@ public class TaskTracker {
     // Variables
 
     public String activeWindowTitle;
+    public String activeWindowProcessPath;
+    public String activeWindowTitle1;
     private ImageIcon currentIcon;
     private int processId;
 
@@ -123,7 +125,10 @@ public class TaskTracker {
 
         // Output.
 
-        activeWindowTitle = windowTitleStr + " - " + classNameStr + " - " + processId + " - " + parentTitleStr + " - " + processPath + " - " + displayName;
+        displayName = displayName.replaceAll(".exe", "");
+        activeWindowTitle = displayName;
+        activeWindowProcessPath = processPath;
+        //FOR TESTING activeWindowTitle1 = windowTitleStr + " - " + classNameStr + " - " + processId + " - " + parentTitleStr + " - " + processPath + " - " + displayName;
         currentIcon = icon;
 
     }
