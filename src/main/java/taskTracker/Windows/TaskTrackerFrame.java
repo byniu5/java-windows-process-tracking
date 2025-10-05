@@ -8,15 +8,16 @@
 // TODO Current time from system support                                                    Not needed
 // TODO Calculation based on current time                                                   Not needed
 // TODO Set the default icon for apps that doesn't have icon
-// TODO For now I collect only counted time in array
+// TODO BIG  For now I collect only counted time in array
 //      I should store all values of the table row, to save them into database or file
 //      and reuse later
 // TODO Dark theme                                                                              OK
-// TODO Apps should be sorted by counted time. From biggest to smallest.
-// TODO Apps in table and textField should be unavailable for editing.
-// TODO At first iteration, the first tracked app should be added to the table automatically   OK
+// TODO Apps should be sorted by counted time. From biggest to smallest.                        OK
+// TODO Apps in table and textField should be unavailable for editing.                          OK
+// TODO At first iteration, the first tracked app should be added to the table automatically    OK
 // TODO Understand TimeUtils class
 // TODO Consider better structure of the files
+// TODO BIG web pages are counted differently that is the problem
 
 package taskTracker.Windows;
 
@@ -44,8 +45,8 @@ public class TaskTrackerFrame extends JFrame {
 
     private static final int WINDOW_WIDTH = 550;
     private static final int WINDOW_HEIGHT = 250;
-    private static final int ICON_WIDTH = 32;
-    private static final int ICON_HEIGHT = 32;
+    private static final int ICON_WIDTH = 28;
+    private static final int ICON_HEIGHT = 28;
 
     // Variables
 
@@ -61,7 +62,13 @@ public class TaskTrackerFrame extends JFrame {
     private final JTextField textField = new JTextField();
     private final JLabel timeLabel = new JLabel();
     private final JPanel topPanel = new JPanel();
-    private final DefaultTableModel tableModel = new DefaultTableModel();
+    private final DefaultTableModel tableModel = new DefaultTableModel() {
+        // Disable editing table rows.
+        @Override
+        public boolean isCellEditable(int row, int column) {
+            return false;
+        }
+    };
     private final JTable table = new JTable(tableModel);
 
     /**
@@ -126,6 +133,7 @@ public class TaskTrackerFrame extends JFrame {
         panel.add(timeLabel, BorderLayout.SOUTH);
 
         textField.setText(TaskTracker.activeWindowTitle);
+        textField.setEditable(false);
         topPanel.add(iconLabel, BorderLayout.WEST);
         topPanel.add(textField, BorderLayout.CENTER);
 
@@ -224,19 +232,23 @@ public class TaskTrackerFrame extends JFrame {
      */
     private void updateTable() {
 
-            for (int i = 0; i < tableModel.getRowCount(); i++) {
-                if (tableModel.getValueAt(i, 1).equals(TaskTracker.activeWindowTitle)) {
-                    // Calculate time actually counted with the time stored in the array.
-                    int timeCounted = timeCounter + timeValuesArray.get(i);
-                    // Set the new time value in the array and table.
-                    timeValuesArray.set(i, timeCounted);
-                    tableModel.setValueAt(formatCountedTime(timeCounted), i, 2);
-                    timeCounter = 0;
-                    return;
+        for (int i = 0; i < tableModel.getRowCount(); i++) {
+            if (tableModel.getValueAt(i, 1).equals(TaskTracker.activeWindowTitle)) {
+                // Calculate time actually counted with the time stored in the array.
+                int timeCounted = timeCounter + timeValuesArray.get(i);
+                // Set the new time value in the array and table.
+                timeValuesArray.set(i, timeCounted);
+                tableModel.setValueAt(formatCountedTime(timeCounted), i, 2);
+                timeCounter = 0;
+                sortTableByTime();
+                return;
                 }
             }
     }
 
+    /**
+     * Formats the time duration in a human-readable format.
+     */
     private String formatCountedTime(int time) {
         String timeStr = "";
         if (time >= 3600) {
@@ -249,6 +261,47 @@ public class TaskTrackerFrame extends JFrame {
         }
         timeStr += time + "s";
         return timeStr;
+    }
+
+    /**
+     * Sorts the rows of the table in descending order based on their corresponding time values.
+     * The method uses an external list of time values and matches them with the rows in
+     * the table model to rearrange data accordingly.
+     */
+    private void sortTableByTime() {
+        // Create a list of indices.
+        java.util.List<Integer> indices = new java.util.ArrayList<>();
+        for (int i = 0; i < tableModel.getRowCount(); i++) {
+            indices.add(i);
+        }
+
+        // Sort indices based on time values (descending order).
+        indices.sort((i1, i2) -> Integer.compare(timeValuesArray.get(i2), timeValuesArray.get(i1)));
+
+        // Create temporary storage for sorted data
+        java.util.List<Object[]> sortedRows = new java.util.ArrayList<>();
+        java.util.List<Integer> sortedTimes = new java.util.ArrayList<>();
+
+        for (int idx : indices) {
+            Object[] row = new Object[tableModel.getColumnCount()];
+            for (int col = 0; col < tableModel.getColumnCount(); col++) {
+                row[col] = tableModel.getValueAt(idx, col);
+            }
+            sortedRows.add(row);
+            sortedTimes.add(timeValuesArray.get(idx));
+        }
+
+        // Update table model and time array with sorted data
+        for (int i = 0; i < sortedRows.size(); i++) {
+            Object[] row = sortedRows.get(i);
+            for (int col = 0; col < tableModel.getColumnCount(); col++) {
+                tableModel.setValueAt(row[col], i, col);
+            }
+            timeValuesArray.set(i, sortedTimes.get(i));
+        }
+
+        tableModel.fireTableDataChanged();
+
     }
 
 }
