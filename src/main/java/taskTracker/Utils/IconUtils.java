@@ -1,4 +1,4 @@
-package taskTracker;
+package taskTracker.Utils;
 
 import javax.swing.*;
 import java.awt.*;

@@ -15,20 +15,26 @@
 // TODO Apps should be sorted by counted time. From biggest to smallest.                        OK
 // TODO Apps in table and textField should be unavailable for editing.                          OK
 // TODO At first iteration, the first tracked app should be added to the table automatically    OK
-// TODO Understand TimeUtils class
+// TODO Understand ThemeUtils, TimeUtils, AppData class
 // TODO Consider better structure of the files
 // TODO BIG web pages are counted differently that is the problem                               OK
+// TODO When I close the system, the app is not saved, I need to manually close it,
+//      then data is saved.
+// TODO DEAMON Startup
+// TODO App should always be visible on top
+// TODO delete path from table and change the size of window
 
 package taskTracker.Windows;
 
 import taskTracker.TaskTracker;
-import taskTracker.themeUtils;
+import taskTracker.Utils.themeUtils;
+import taskTracker.AppData;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 
-import static taskTracker.IconUtils.resizeIcon;
+import static taskTracker.Utils.IconUtils.resizeIcon;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
@@ -62,6 +68,7 @@ public class TaskTrackerFrame extends JFrame {
     private final JTextField textField = new JTextField();
     private final JLabel timeLabel = new JLabel();
     private final JPanel topPanel = new JPanel();
+    private final JPanel bottomPanel = new JPanel();
     private final DefaultTableModel tableModel = new DefaultTableModel() {
         // Disable editing table rows.
         @Override
@@ -70,6 +77,7 @@ public class TaskTrackerFrame extends JFrame {
         }
     };
     private final JTable table = new JTable(tableModel);
+    private final JLabel dateLabel = new JLabel();
 
     /**
      * The TaskTrackerFrame class is a GUI-based component for tracking and displaying
@@ -84,6 +92,44 @@ public class TaskTrackerFrame extends JFrame {
 
         themeUtils.applyGlobalTheme();
         initializeUI();
+
+        // Load persisted app data and populate table
+        AppData.getInstance().loadFromFile();
+        java.util.List<AppData.TrackedApp> savedApps = AppData.getInstance().getAllApps();
+        for (AppData.TrackedApp app : savedApps) {
+            ImageIcon savedIcon = AppData.getInstance().loadIcon(app.getIconFileName());
+            ImageIcon resizedSavedIcon = savedIcon != null ? resizeIcon(savedIcon, ICON_WIDTH, ICON_HEIGHT) : null;
+            tableModel.insertRow(0, new Object[]{
+                    resizedSavedIcon,
+                    app.getTitle(),
+                    app.getPath(),
+                    formatCountedTime(app.getTimeInSeconds())
+            });
+            timeValuesArray.add(0, app.getTimeInSeconds());
+        }
+        sortTableByTime();
+
+        // Save data on window close
+        this.addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                // Before saving, ensure the current active app time is persisted
+                try {
+                    // Find current app in table and persist its time
+                    for (int i = 0; i < tableModel.getRowCount(); i++) {
+                        Object pathObj = tableModel.getValueAt(i, 2);
+                        if (pathObj != null) {
+                            String path = pathObj.toString();
+                            int seconds = timeValuesArray.get(i);
+                            String title = String.valueOf(tableModel.getValueAt(i, 1));
+                            ImageIcon icon = (ImageIcon) tableModel.getValueAt(i, 0);
+                            AppData.getInstance().addOrUpdateApp(title, path, seconds, icon);
+                        }
+                    }
+                } catch (Exception ignored) {}
+                AppData.getInstance().saveToFile();
+            }
+        });
 
         Timer timer = new Timer(1000, e -> {
             TaskTracker.trackActiveWindow();
@@ -129,13 +175,16 @@ public class TaskTrackerFrame extends JFrame {
         add(panel);
 
         topPanel.setLayout(new BorderLayout(8, 8));
+        bottomPanel.setLayout(new BorderLayout(8, 8));
         panel.add(topPanel, BorderLayout.NORTH);
-        panel.add(timeLabel, BorderLayout.SOUTH);
+        panel.add(bottomPanel, BorderLayout.SOUTH);
 
         textField.setText(TaskTracker.activeWindowTitle);
         textField.setEditable(false);
         topPanel.add(iconLabel, BorderLayout.WEST);
         topPanel.add(textField, BorderLayout.CENTER);
+        bottomPanel.add(timeLabel, BorderLayout.WEST);
+        bottomPanel.add(dateLabel, BorderLayout.EAST);
 
         // Table layout
 
@@ -173,7 +222,9 @@ public class TaskTrackerFrame extends JFrame {
 
         themeUtils.stylePanel(panel);
         themeUtils.stylePanel(topPanel);
+        themeUtils.stylePanel(bottomPanel);
         themeUtils.styleLabel(timeLabel);
+        themeUtils.styleLabel(dateLabel);
         themeUtils.styleTextField(textField);
         themeUtils.styleScrollPane(scrollPane);
         themeUtils.styleTable(table);
@@ -199,6 +250,7 @@ public class TaskTrackerFrame extends JFrame {
 
         textField.setText(TaskTracker.activeWindowProcessPath);
         timeLabel.setText("Time: " + formatCountedTime(timeOfWork));
+        dateLabel.setText(String.valueOf(TaskTracker.currentDate));
     }
 
     /**
@@ -227,6 +279,8 @@ public class TaskTrackerFrame extends JFrame {
                 0
         });
         timeValuesArray.add(0, 0);
+        // Persist new app with initial time
+        AppData.getInstance().addOrUpdateApp(TaskTracker.activeWindowTitle, TaskTracker.activeWindowProcessPath, 0, TaskTracker.getCurrentIcon());
     }
 
     /**
@@ -243,6 +297,8 @@ public class TaskTrackerFrame extends JFrame {
                 timeValuesArray.set(i, timeCounted);
                 tableModel.setValueAt(formatCountedTime(timeCounted), i, 3);
                 timeCounter = 0;
+                // Persist updated time for the active app
+                AppData.getInstance().addOrUpdateApp(TaskTracker.activeWindowTitle, TaskTracker.activeWindowProcessPath, timeCounted, TaskTracker.getCurrentIcon());
                 sortTableByTime();
                 return;
                 }

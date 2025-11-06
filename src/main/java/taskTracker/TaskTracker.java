@@ -8,8 +8,9 @@ import com.sun.jna.platform.win32.WinNT;
 import com.sun.jna.platform.win32.Psapi;
 import com.sun.jna.ptr.IntByReference;
 import taskTracker.Interfaces.*;
+import taskTracker.Utils.IconUtils;
+import java.time.LocalDate;
 import javax.swing.*;
-import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 
@@ -28,9 +29,9 @@ public class TaskTracker {
 
     public String activeWindowTitle;
     public String activeWindowProcessPath;
-    public String activeWindowTitle1;
     private ImageIcon currentIcon;
     private int processId;
+    public LocalDate currentDate = LocalDate.now();
 
     // Methods
 
